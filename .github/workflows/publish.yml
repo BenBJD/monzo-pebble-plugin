@@ -59,15 +59,8 @@ jobs:
           TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://appstore-api.repebble.com" | jq -r .value)
 
-          # Replace REPEBBLE_PLUGIN_APP_ID with your plugin's app id on the RePebble Developer Dashboard
-          APP_ID="${{ secrets.REPEBBLE_PLUGIN_APP_ID }}"
-          if [ -z "$APP_ID" ]; then
-            echo "Error: REPEBBLE_PLUGIN_APP_ID secret is not set."
-            exit 1
-          fi
-
           curl -sS --fail-with-body -H "Authorization: Bearer $TOKEN" \
             --form-string version="$VERSION" \
             -F "pbwFile=@monzo-pebble-plugin.pbw" \
             --form-string isPublished=true \
-            "https://appstore-api.repebble.com/api/dashboard/apps/${APP_ID}/releases"
+            "https://appstore-api.repebble.com/api/dashboard/apps/27b775569e834626ba110b71/releases"
