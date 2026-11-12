@@ -287,11 +287,7 @@
     <span id="conn-type-badge" class="status-badge permanent">OAuth 2.0</span>
   </div>
   <h2>Account Overview</h2>
-  <div class="field">
-    <label for="account-select">First Account</label>
-    <select id="account-select"></select>
-  </div>
-  <p id="account-details" class="instructions"></p>
+  <div id="account-details" class="instructions"></div>
   <button id="btn-unlink" type="button" class="btn secondary">Disconnect Account</button>
 </div>
 
@@ -376,19 +372,6 @@
   </div>
 </div>
 
-  <!-- Display Settings Card -->
-  <div class="card">
-    <h2>Display Settings</h2>
-    <div class="field">
-      <label for="theme-select">Watch Theme</label>
-      <select id="theme-select">
-        <option value="light">Light (Classic Pebble)</option>
-        <option value="dark">Dark (Monzo Navy)</option>
-      </select>
-    </div>
-    <button id="btn-save-theme" type="button" class="btn secondary">Save Theme</button>
-  </div>
-
   <div id="status-msg">Starting Monzo plugin…</div>
 
   <script>
@@ -412,29 +395,19 @@
       banner.classList.remove('hidden');
     }
 
-    function renderAccounts(accounts, selectedId) {
-      var select = $('account-select');
-      select.innerHTML = '';
-      (accounts || []).forEach(function (acc) {
-        var opt = document.createElement('option');
-        opt.value = acc.id;
-        opt.textContent = (acc.description || 'Current Account') + ' (' + (acc.type || 'account') + ')';
-        if (acc.id === selectedId) opt.selected = true;
-        select.appendChild(opt);
-      });
-    }
-
     function showState(data) {
       console.log(data);
       if (data && data.configured) {
         $('card-connected').classList.remove('hidden');
         $('card-setup').classList.add('hidden');
         $('banner-pending').classList.add('hidden');
-        renderAccounts(data.accounts, data.selectedAccountId);
 
-        var details = 'Account ID: ' + (data.selectedAccountId || 'default');
+        var accListHtml = (data.accounts || []).map(function (a) {
+          return '<li>' + (a.description || 'Account') + ' <span style="opacity: 0.7;">(' + (a.type || 'standard') + ')</span></li>';
+        }).join('');
+        var details = '<strong>Authorized Accounts:</strong><ul style="padding-left: 20px; margin: 8px 0;">' + (accListHtml || '<li>None</li>') + '</ul>';
         if (typeof data.potsCount === 'number') {
-          details += '<br>Savings Pots found: ' + data.potsCount;
+          details += '<div>Savings Pots: ' + data.potsCount + '</div>';
         }
         $('account-details').innerHTML = details;
         say('Plugin is connected and serving Monzo data.');
@@ -625,61 +598,12 @@
 
     $('btn-check-status').onclick = checkApproval;
 
-    $('account-select').onchange = async function () {
-      var accId = this.value;
-      say('Updating first account…');
-      var reply = await send({type: 'selectAccount', accountId: accId});
-      if (reply.error) say('Error: ' + reply.error);
-      else say('First account updated.');
-    };
-
     $('btn-unlink').onclick = async function () {
       say('Disconnecting…');
       var reply = await send({type: 'unlink'});
       showState({configured: false});
     };
 
-    function initTheme() {
-      var savedTheme = 'light';
-      try {
-        savedTheme = localStorage.getItem('monzo_theme') || 'light';
-      } catch (e) {
-      }
-      $('theme-select').value = savedTheme;
-    }
-
-    $('theme-select').onchange = async function () {
-      var val = this.value;
-      try {
-        localStorage.setItem('monzo_theme', val);
-      } catch (e) {
-      }
-      say('Updating watch theme…');
-      try {
-        await send({type: 'setTheme', theme: val});
-        say('Watch theme set to ' + (val === 'light' ? 'Light' : 'Dark') + '.');
-      } catch (e) {
-      }
-    };
-
-    $('btn-save-theme').onclick = async function () {
-      var val = $('theme-select').value;
-      try {
-        localStorage.setItem('monzo_theme', val);
-      } catch (e) {
-      }
-      say('Saving preferences…');
-      try {
-        await send({type: 'setTheme', theme: val});
-      } catch (e) {
-      }
-      say('Theme preference applied!');
-      if (typeof Pebble !== 'undefined' && Pebble.openUrl) {
-        document.location = 'pebblejs://close#' + encodeURIComponent(JSON.stringify({theme: val}));
-      }
-    };
-
-    initTheme();
     restoreDraftOAuth();
 
     Pebble.addEventListener('ready', async function (event) {
