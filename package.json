@@ -1,0 +1,211 @@
+{
+  "name": "monzo-pebble-plugin",
+  "author": "BenBJD",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-plugin"
+  ],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Monzo",
+    "uuid": "616053eb-a208-4fea-a0b8-9c773ad308f6",
+    "sdkVersion": "3",
+    "projectType": "plugin",
+    "usesPermissions": [
+      {
+        "name": "Internet",
+        "parameters": {
+          "domains": [
+            "api.monzo.com"
+          ]
+        },
+        "reason": "To fetch Monzo account balances, pots, and transactions",
+        "required": true
+      }
+    ],
+    "configPage": "src/config.html",
+    "plugin": {
+      "description": "Monzo bank integration providing real-time balances, spending, pots, and recent transactions.",
+      "script": "src/plugin/index.js",
+      "sources": [
+        {
+          "category": "finance",
+          "items": [
+            "account"
+          ],
+          "properties": {
+            "name": [
+              "shortText",
+              "longText"
+            ],
+            "account_type": [
+              "shortText"
+            ],
+            "balance": [
+              "numericValue",
+              "shortText",
+              "longText"
+            ],
+            "total_balance": [
+              "numericValue",
+              "shortText",
+              "longText"
+            ],
+            "spend_today": [
+              "numericValue",
+              "shortText",
+              "longText"
+            ],
+            "currency": [
+              "shortText"
+            ],
+            "account_id": [
+              "shortText"
+            ]
+          },
+          "supportsMultiple": true,
+          "suggestedRefreshIntervalSec": 60
+        },
+        {
+          "category": "finance",
+          "items": [
+            "pot"
+          ],
+          "properties": {
+            "name": [
+              "shortText",
+              "longText"
+            ],
+            "balance": [
+              "numericValue",
+              "shortText",
+              "longText"
+            ],
+            "currency": [
+              "shortText"
+            ],
+            "account_id": [
+              "shortText"
+            ]
+          },
+          "supportsMultiple": true,
+          "suggestedRefreshIntervalSec": 120
+        },
+        {
+          "category": "finance",
+          "items": [
+            "transaction"
+          ],
+          "properties": {
+            "name": [
+              "shortText",
+              "longText"
+            ],
+            "amount": [
+              "numericValue",
+              "shortText",
+              "longText"
+            ],
+            "merchant": [
+              "shortText",
+              "longText"
+            ],
+            "created": [
+              "timestamp"
+            ],
+            "category": [
+              "shortText"
+            ],
+            "account_id": [
+              "shortText"
+            ]
+          },
+          "supportsMultiple": true,
+          "suggestedRefreshIntervalSec": 120
+        },
+        {
+          "category": "finance",
+          "items": [
+            "configured"
+          ],
+          "properties": {
+            "name": [
+              "shortText"
+            ],
+            "configured": [
+              "boolean",
+              "shortText"
+            ]
+          },
+          "supportsMultiple": false,
+          "suggestedRefreshIntervalSec": 60
+        }
+      ],
+      "actions": [
+        {
+          "name": "deposit_pot",
+          "description": "Deposit money into a savings pot.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "pot_id": {
+                "type": "string",
+                "description": "The pot ID"
+              },
+              "amount": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Amount in pence"
+              },
+              "account_id": {
+                "type": "string",
+                "description": "Source account ID (optional)"
+              }
+            },
+            "required": [
+              "pot_id",
+              "amount"
+            ],
+            "additionalProperties": false
+          },
+          "targets": [
+            "finance/pot",
+            "finance/account"
+          ]
+        },
+        {
+          "name": "withdraw_pot",
+          "description": "Withdraw money from a savings pot.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "pot_id": {
+                "type": "string",
+                "description": "The pot ID"
+              },
+              "amount": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Amount in pence"
+              },
+              "account_id": {
+                "type": "string",
+                "description": "Destination account ID (optional)"
+              }
+            },
+            "required": [
+              "pot_id",
+              "amount"
+            ],
+            "additionalProperties": false
+          },
+          "targets": [
+            "finance/pot",
+            "finance/account"
+          ]
+        }
+      ]
+    }
+  }
+}
