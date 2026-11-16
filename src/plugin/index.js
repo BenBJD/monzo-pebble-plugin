@@ -348,12 +348,18 @@ function setSelectedAccountId(id) {
 
 async function resolveAccountAndToken() {
   var token = await getAccessToken();
-  if (!token) return { token: null, account: null };
+  if (!token) {
+    token = await refreshTokens();
+    if (!token) return { token: null, account: null };
+  }
 
-  var accRes = await apiGetAccounts(token);
+  var accRes = await apiGetAccounts();
   if (!accRes.ok || !accRes.accounts || !accRes.accounts.length) {
     return { token: token, account: null, error: accRes.error, message: accRes.message };
   }
+
+  // Re-read token in case monzoFetch refreshed it on 401
+  token = await getAccessToken();
 
   var selectedId = getSelectedAccountId();
   var primary = accRes.accounts.find(function (a) { return a.id === selectedId; }) || accRes.accounts[0];
@@ -421,7 +427,7 @@ Pebble.registerSourceHandler(async function (request, respond) {
 
     for (var i = 0; i < sortedAccounts.length; i++) {
       var acc = sortedAccounts[i];
-      var balRes = await apiGetBalance(acc.id, token);
+      var balRes = await apiGetBalance(acc.id);
       if (balRes.ok) {
         var b = balRes.json;
         var spendVal = typeof b.spend_today === 'number' ? b.spend_today : 0;
@@ -484,7 +490,7 @@ Pebble.registerSourceHandler(async function (request, respond) {
 
     for (var a = 0; a < accounts.length; a++) {
       var curAcc = accounts[a];
-      var potRes = await apiGetPots(curAcc.id, token);
+      var potRes = await apiGetPots(curAcc.id);
       if (potRes.ok && potRes.pots) {
         for (var p = 0; p < potRes.pots.length; p++) {
           var pot = potRes.pots[p];
@@ -522,7 +528,7 @@ Pebble.registerSourceHandler(async function (request, respond) {
 
   // 4. finance/transaction
   if (request.item === 'transaction') {
-    var txRes = await apiGetTransactions(context.account.id, token);
+    var txRes = await apiGetTransactions(context.account.id);
     if (!txRes.ok) {
       respond.error(txRes.error || 'PLUGIN_UNAVAILABLE', txRes.message || 'Failed to fetch transactions.');
       return;
@@ -610,7 +616,7 @@ Pebble.registerActionHandler(async function (request, respond) {
       source_account_id: accountId,
       amount: Math.round(amount),
       dedupe_id: dedupeId
-    }, token);
+    });
 
     if (!depositRes.ok) {
       respond.error(depositRes.error || 'UNKNOWN', depositRes.message || 'Deposit failed.');
@@ -631,7 +637,7 @@ Pebble.registerActionHandler(async function (request, respond) {
       destination_account_id: accountId,
       amount: Math.round(amount),
       dedupe_id: dedupeId
-    }, token);
+    });
 
     if (!withdrawRes.ok) {
       respond.error(withdrawRes.error || 'UNKNOWN', withdrawRes.message || 'Withdrawal failed.');

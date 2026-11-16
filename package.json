@@ -8,7 +8,7 @@
   "private": true,
   "dependencies": {},
   "pebble": {
-    "displayName": "Monzo",
+    "displayName": "Monzo Plugin",
     "uuid": "616053eb-a208-4fea-a0b8-9c773ad308f6",
     "sdkVersion": "3",
     "projectType": "plugin",
